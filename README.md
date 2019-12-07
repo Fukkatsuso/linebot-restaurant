@@ -24,3 +24,10 @@ $ docker-compose run app bundle install --path vendor/bundle
 $ docker-compose up
 (another tab) $ ngrok http 4567
 ```
+
+### Deploy to Heroku
+```
+$ heroku stack:set container
+$ sh heroku_config_set.sh
+$ git push heroku master
+```

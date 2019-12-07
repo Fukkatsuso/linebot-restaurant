@@ -1,0 +1,12 @@
+FROM ruby:2.6.5
+
+WORKDIR /app
+ADD app.rb ./
+ADD config.ru ./
+ADD Gemfile ./
+ADD Gemfile.lock ./
+
+RUN gem install bundler && \
+    bundle install --path vendor/bundle
+
+EXPOSE 4567

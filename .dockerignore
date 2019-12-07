@@ -1,0 +1,4 @@
+Dockerfile*
+vendor/*
+apikey.env
+architecture.puml
