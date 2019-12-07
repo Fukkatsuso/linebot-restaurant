@@ -27,6 +27,7 @@ $ docker-compose up
 
 ### Deploy to Heroku
 ```
+$ heroku container:login
 $ heroku stack:set container
 $ sh heroku_config_set.sh
 $ git push heroku master
