@@ -1,0 +1,16 @@
+@startuml architecture
+
+cloud "WebAPI" {
+    node "Hotpepper"
+}
+
+node "Docker" {
+    node "Backend"
+}
+
+node "LINE"
+
+Hotpepper--Backend
+Backend--LINE
+
+@enduml
