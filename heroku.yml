@@ -2,4 +2,4 @@ build:
   docker:
     web: Dockerfile.prod
 run:
-  web: bundle exec rackup config.ru -p $PORT
+  web: bundle exec rackup config.ru -o 0.0.0.0 -p $PORT
