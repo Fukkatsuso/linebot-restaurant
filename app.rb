@@ -32,11 +32,19 @@ class App < Sinatra::Base
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
-          params = {
-            keyword: event.message['text']
-          }
-          r = restaurants(params, 3)
-          messages = text_replies(r)
+          messages = nil
+          if event.message['text'] == "いち"
+            messages = {
+              type: 'text',
+              text: "こちらから位置情報を送信してください\nline://nv/location"
+            }
+          else
+            params = {
+              keyword: event.message['text']
+            }
+            r = restaurants(params, 3)
+            messages = text_replies(r)
+          end
           puts "[response] #{messages}"
           client.reply_message(event['replyToken'], messages)
         when Line::Bot::Event::MessageType::Location
