@@ -32,12 +32,12 @@ class App < Sinatra::Base
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
-          r = JSON.parse(restaurants({keyword: event.message['text']}).body)
-          message = {
-            type: 'text',
-            text: (r["results"]["shop"][0]["name"]).to_s
+          params = {
+            keyword: event.message['text']
           }
-          puts message
+          r = restaurants(params, 3)
+          message = text_reply(r)
+          puts "[response] #{message}"
           client.reply_message(event['replyToken'], message)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
           response = client.get_message_content(event.message['id'])
@@ -55,11 +55,11 @@ class App < Sinatra::Base
   end
 
   helpers do
-    def restaurants(params)
+    def restaurants(params, count)
       uri = "http://webservice.recruit.co.jp/hotpepper/gourmet/v1/"
       uri += "?key=#{ENV['HOTPEPPER_API_KEY']}"
       uri += "&format=json"
-      uri += "&count=1"
+      uri += "&count=#{count}"
       params.each do |k, v|
         puts "[#{k}] #{v}"
         uri += "&#{k}=#{v}"
@@ -69,6 +69,22 @@ class App < Sinatra::Base
       req = Net::HTTP::Get.new(uri)
       res = Net::HTTP.start(uri.host, uri.port) { |http|
         http.request(req)
+      }
+      JSON.parse(res.body)
+    end
+
+    def text_reply(r)
+      text = ""
+      r["results"]["shop"].each do |s|
+        text += "[#{s["name"].to_s}]\n"
+        text += "-address: #{s["address"]}\n"
+        text += "-genre: #{s["genre"] ? s["genre"]["name"] : ""}, #{s["sub_genre"] ? ["sub_genre"]["name"] : ""}\n"
+        text += "-open: #{s["open"]}\n"
+        text += "-url: #{s["urls"] ? s["urls"]["pc"] : ""}\n"
+      end
+      reply = {
+        type: 'text',
+        text: text
       }
     end
   end
