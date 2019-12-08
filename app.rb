@@ -76,9 +76,9 @@ class App < Sinatra::Base
     def text_reply(r)
       text = ""
       r["results"]["shop"].each do |s|
-        text += "[#{s["name"].to_s}]\n"
+        text += "[#{s["name"]}]\n"
         text += "-address: #{s["address"]}\n"
-        text += "-genre: #{s["genre"] ? s["genre"]["name"] : ""}, #{s["sub_genre"] ? ["sub_genre"]["name"] : ""}\n"
+        text += "-genre: #{s["genre"] ? s["genre"]["name"] : ""}, #{s["sub_genre"] ? s["sub_genre"]["name"] : ""}\n"
         text += "-open: #{s["open"]}\n"
         text += "-url: #{s["urls"] ? s["urls"]["pc"] : ""}\n"
       end

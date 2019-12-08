@@ -14,6 +14,7 @@ $ echo "LINE_CHANNEL_SECRET=hogehoge" >> apikey.env
 $ echo "LINE_CHANNEL_TOKEN=hogefuga" >> apikey.env
 ```
 
+## Run and Debug
 ### Sinatra
 ```
 $ docker-compose run app bundle install --path vendor/bundle
@@ -25,7 +26,8 @@ $ docker-compose up
 (another tab) $ ngrok http 4567
 ```
 
-### Deploy to Heroku
+## Deploy
+### Heroku
 ```
 $ heroku container:login
 $ heroku stack:set container
