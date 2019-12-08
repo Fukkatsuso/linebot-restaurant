@@ -36,18 +36,18 @@ class App < Sinatra::Base
             keyword: event.message['text']
           }
           r = restaurants(params, 3)
-          message = text_reply(r)
-          puts "[response] #{message}"
-          client.reply_message(event['replyToken'], message)
+          messages = text_replies(r)
+          puts "[response] #{messages}"
+          client.reply_message(event['replyToken'], messages)
         when Line::Bot::Event::MessageType::Location
           params = {
             lat: event.message['latitude'],
             lng: event.message['longitude']
           }
           r = restaurants(params, 3)
-          message = text_reply(r)
-          puts "[response] #{message}"
-          client.reply_message(event['replyToken'], message)
+          messages = text_replies(r)
+          puts "[response] #{messages}"
+          client.reply_message(event['replyToken'], messages)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
           response = client.get_message_content(event.message['id'])
           tf = Tempfile.open("content")
@@ -82,19 +82,22 @@ class App < Sinatra::Base
       JSON.parse(res.body)
     end
 
-    def text_reply(r)
-      text = ""
+    def text_replies(r)
+      replies = []
       r["results"]["shop"].each do |s|
+        text = ""
         text += "[#{s["name"]}]\n"
         text += "-address: #{s["address"]}\n"
         text += "-genre: #{s["genre"] ? s["genre"]["name"] : ""}, #{s["sub_genre"] ? s["sub_genre"]["name"] : ""}\n"
         text += "-open: #{s["open"]}\n"
         text += "-url: #{s["urls"] ? s["urls"]["pc"] : ""}\n"
+        reply = {
+          type: 'text',
+          text: text
+        }
+        replies << reply
       end
-      reply = {
-        type: 'text',
-        text: text
-      }
+      return replies
     end
   end
 end
