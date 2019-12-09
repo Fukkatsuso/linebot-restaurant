@@ -32,18 +32,18 @@ class App < Sinatra::Base
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
+          puts "[request] #{event.message['text']}"
           messages = nil
-          if event.message['text'] == "いち"
-            messages = {
-              type: 'text',
-              text: "こちらから位置情報を送信してください\nline://nv/location"
-            }
+          if event.message['text'] == "キーワード検索"
+            messages = keyword_search_info
+          elsif event.message['text'] == "位置情報検索"
+            messages = location_search_info
           else
             params = {
               keyword: event.message['text']
             }
             r = restaurants(params, 3)
-            messages = text_replies(r)
+            messages = restaurants_reply(r)
           end
           puts "[response] #{messages}"
           client.reply_message(event['replyToken'], messages)
@@ -53,7 +53,7 @@ class App < Sinatra::Base
             lng: event.message['longitude']
           }
           r = restaurants(params, 3)
-          messages = text_replies(r)
+          messages = restaurants_reply(r)
           puts "[response] #{messages}"
           client.reply_message(event['replyToken'], messages)
         when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
@@ -90,7 +90,7 @@ class App < Sinatra::Base
       JSON.parse(res.body)
     end
 
-    def text_replies(r)
+    def restaurants_reply(r)
       replies = []
       r["results"]["shop"].each do |s|
         text = ""
@@ -106,6 +106,31 @@ class App < Sinatra::Base
         replies << reply
       end
       return replies
+    end
+
+    def keyword_search_info
+      info = {
+        type: 'text',
+        text: "キーワードを入力してネ"
+      }
+    end
+
+    def location_search_info
+      info = {
+        type: 'template',
+        altText: "位置情報送信ボタン",
+        template: {
+          type: 'buttons',
+          text: "位置情報を送信してネ",
+          actions: [
+            {
+              type: 'uri',
+              label: '送信する',
+              uri: "line://nv/location"
+            }
+          ]
+        }
+      }
     end
   end
 end
