@@ -1,0 +1,13 @@
+@startuml talk-flow
+
+(*) -->[-] "keyword"
+"keyword" -->[keywords, latlng, range] "result"
+"result" -->[keywords, latlng, range] "keyword"
+"result" --> (*)
+
+(*) -->[-] "latlng"
+"latlng" -->[latlng] "range"
+"range" -->[latlng, range] "result"
+"range" -->[latlng, range] "keyword"
+
+@enduml
