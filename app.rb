@@ -12,9 +12,9 @@ class App < Sinatra::Base
 
   def client
     @client ||= Line::Bot::Client.new { |config|
-      config.channel_id = ENV["LINE_CHANNEL_ID"]
-      config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
-      config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
+      config.channel_id = ENV['LINE_CHANNEL_ID']
+      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
+      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
     }
   end
   
@@ -28,12 +28,13 @@ class App < Sinatra::Base
   
     events = client.parse_events_from(body)
     events.each do |event|
+      messages = nil
+      
       case event
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
           puts "[request] #{event.message['text']}"
-          messages = nil
           if event.message['text'] == "キーワード検索"
             messages = keyword_search_info
           elsif event.message['text'] == "位置情報検索"
@@ -45,23 +46,28 @@ class App < Sinatra::Base
             r = restaurants(params, 3)
             messages = restaurants_reply(r)
           end
-          puts "[response] #{messages}"
-          client.reply_message(event['replyToken'], messages)
         when Line::Bot::Event::MessageType::Location
-          params = {
-            lat: event.message['latitude'],
-            lng: event.message['longitude']
-          }
+          lat = event.message['latitude']
+          lng = event.message['longitude']
+          range = 3
+          messages = location_search_confirm(lat, lng, range)
+        end
+
+      when Line::Bot::Event::Postback
+        data = Rack::Utils.parse_nested_query(event['postback']['data'])
+        puts "[postback] #{data}"
+        case data['action']
+        when "restaurants"
+          params = data.select{|k, v| k != 'action'}
           r = restaurants(params, 3)
           messages = restaurants_reply(r)
-          puts "[response] #{messages}"
-          client.reply_message(event['replyToken'], messages)
-        when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-          response = client.get_message_content(event.message['id'])
-          tf = Tempfile.open("content")
-          tf.write(response.body)
+        when "keyword_search"
+          messages = keyword_search_info
         end
       end
+
+      puts "[response] #{messages}"
+      client.reply_message(event['replyToken'], messages)
     end
   
     "OK"
@@ -92,13 +98,13 @@ class App < Sinatra::Base
 
     def restaurants_reply(r)
       replies = []
-      r["results"]["shop"].each do |s|
+      r['results']['shop'].each do |s|
         text = ""
-        text += "[#{s["name"]}]\n"
-        text += "-address: #{s["address"]}\n"
-        text += "-genre: #{s["genre"] ? s["genre"]["name"] : ""}, #{s["sub_genre"] ? s["sub_genre"]["name"] : ""}\n"
-        text += "-open: #{s["open"]}\n"
-        text += "-url: #{s["urls"] ? s["urls"]["pc"] : ""}\n"
+        text += "[#{s['name']}]\n"
+        text += "-address: #{s['address']}\n"
+        text += "-genre: #{s['genre'] ? s['genre']['name'] : ""}, #{s['sub_genre'] ? s['sub_genre']['name'] : ""}\n"
+        text += "-open: #{s['open']}\n"
+        text += "-url: #{s['urls'] ? s['urls']['pc'] : ""}\n"
         reply = {
           type: 'text',
           text: text
@@ -125,8 +131,33 @@ class App < Sinatra::Base
           actions: [
             {
               type: 'uri',
-              label: '送信する',
+              label: "送信する",
               uri: "line://nv/location"
+            }
+          ]
+        }
+      }
+    end
+
+    def location_search_confirm(lat, lng, range = 3)
+      confirm = {
+        type: 'template',
+        altText: "絞り込み検索",
+        template: {
+          type: 'confirm',
+          text: "キーワードで絞り込みますか？",
+          actions: [
+            {
+              type: 'postback',
+              label: "はい",
+              displayText: "はい",
+              data: "action=keyword_search&lat=#{lat}&lng=#{lng}&range=#{range}"
+            },
+            {
+              type: 'postback',
+              label: "いいえ",
+              displayText: "いいえ",
+              data: "action=restaurants&lat=#{lat}&lng=#{lng}&range=#{range}"
             }
           ]
         }
