@@ -61,8 +61,9 @@ class App < Sinatra::Base
           params = data.select{|k, v| k != 'action'}
           r = restaurants(params, 3)
           messages = restaurants_reply(r)
-        when "keyword_search"
-          messages = keyword_search_info
+        when "genre_search"
+          params = data.select{|k, v| k != 'action'}
+          messages = genre_search_info(params['lat'], params['lng'], params['range'])
         end
       end
 
@@ -96,20 +97,41 @@ class App < Sinatra::Base
       JSON.parse(res.body)
     end
 
+    def genres
+      uri = "http://webservice.recruit.co.jp/hotpepper/genre/v1/"
+      uri += "?key=#{ENV['HOTPEPPER_API_KEY']}"
+      uri += "&format=json"
+      uri = URI.parse(URI.encode(uri.force_encoding("UTF-8")))
+      puts "[uri] #{uri}"
+      req = Net::HTTP::Get.new(uri)
+      res = Net::HTTP.start(uri.host, uri.port) { |http|
+        http.request(req)
+      }
+      JSON.parse(res.body)
+    end
+
     def restaurants_reply(r)
       replies = []
-      r['results']['shop'].each do |s|
-        text = ""
-        text += "[#{s['name']}]\n"
-        text += "-address: #{s['address']}\n"
-        text += "-genre: #{s['genre'] ? s['genre']['name'] : ""}, #{s['sub_genre'] ? s['sub_genre']['name'] : ""}\n"
-        text += "-open: #{s['open']}\n"
-        text += "-url: #{s['urls'] ? s['urls']['pc'] : ""}\n"
+      if r['results']['shop'].length == 0
         reply = {
           type: 'text',
-          text: text
+          text: "ごめんなさい。見つかりませんでした(._.)"
         }
         replies << reply
+      else
+        r['results']['shop'].each do |s|
+          text = ""
+          text += "[#{s['name']}]\n"
+          text += "-address: #{s['address']}\n"
+          text += "-genre: #{s['genre'] ? s['genre']['name'] : ""}, #{s['sub_genre'] ? s['sub_genre']['name'] : ""}\n"
+          text += "-open: #{s['open']}\n"
+          text += "-url: #{s['urls'] ? s['urls']['pc'] : ""}\n"
+          reply = {
+            type: 'text',
+            text: text
+          }
+          replies << reply
+        end
       end
       return replies
     end
@@ -139,19 +161,48 @@ class App < Sinatra::Base
       }
     end
 
+    def genre_search_info(lat, lng, range = 3)
+      items = []
+      i = 0
+      genres['results']['genre'].each do |genre|
+        item = {
+          type: 'action',
+          action: {
+            type: 'postback',
+            label: genre['name'],
+            displayText: genre['name'],
+            data: "action=restaurants&lat=#{lat}&lng=#{lng}&range=#{range}&genre=#{genre['code']}"
+          }
+        }
+        items << item
+        i += 1
+        # ボタンは13個まで
+        if i >= 13
+          break
+        end
+      end
+      return info = {
+        type: 'text',
+        text: "ジャンルを選んでネ",
+        quickReply: {
+          items: items
+        }
+      }
+    end
+
     def location_search_confirm(lat, lng, range = 3)
       confirm = {
         type: 'template',
         altText: "絞り込み検索",
         template: {
           type: 'confirm',
-          text: "キーワードで絞り込みますか？",
+          text: "ジャンルで絞り込みますか？",
           actions: [
             {
               type: 'postback',
               label: "はい",
               displayText: "はい",
-              data: "action=keyword_search&lat=#{lat}&lng=#{lng}&range=#{range}"
+              data: "action=genre_search&lat=#{lat}&lng=#{lng}&range=#{range}"
             },
             {
               type: 'postback',
