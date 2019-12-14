@@ -281,13 +281,18 @@ class App < Sinatra::Base
               action: {
                 type: 'uri',
                 label: 'マップで見る',
-                uri: "https://webservice.recruit.co.jp/hotpepper/reference.html"
+                uri: restaurant_googlemapurl(r)
               }
             }
           ],
           paddingAll: 'none'
         }
       }
+    end
+
+    def restaurant_googlemapurl(r)
+      url = "https://www.google.com/maps/search/?api=1&query=#{r['name']}"
+      URI.encode(url.force_encoding("UTF-8"))
     end
 
     def carousel(bubbles)
