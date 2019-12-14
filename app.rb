@@ -10,6 +10,8 @@ class App < Sinatra::Base
     register Sinatra::Reloader
   end
 
+  MAX_RESULT = 10
+
   def client
     @client ||= Line::Bot::Client.new { |config|
       config.channel_id = ENV['LINE_CHANNEL_ID']
@@ -43,7 +45,7 @@ class App < Sinatra::Base
             params = {
               keyword: event.message['text']
             }
-            r = restaurants(params, 3)
+            r = restaurants(params, MAX_RESULT)
             messages = restaurants_reply(r)
           end
         when Line::Bot::Event::MessageType::Location
@@ -59,7 +61,7 @@ class App < Sinatra::Base
         case data['action']
         when "restaurants"
           params = data.select{|k, v| k != 'action'}
-          r = restaurants(params, 3)
+          r = restaurants(params, MAX_RESULT)
           messages = restaurants_reply(r)
         when "genre_search"
           params = data.select{|k, v| k != 'action'}
@@ -119,11 +121,16 @@ class App < Sinatra::Base
         }
         replies << reply
       else
+        replies = []
+        replies << {
+          type: 'text',
+          text: "#{r['results']['shop'].length}件見つかりました"
+        }
         bubbles = []
         r['results']['shop'].each do |s|
           bubbles << restaurant_bubble(s)
         end
-        replies = carousel(bubbles)
+        replies << carousel(bubbles)
       end
       return replies
     end
