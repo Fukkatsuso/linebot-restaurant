@@ -119,21 +119,186 @@ class App < Sinatra::Base
         }
         replies << reply
       else
+        bubbles = []
         r['results']['shop'].each do |s|
-          text = ""
-          text += "[#{s['name']}]\n"
-          text += "-address: #{s['address']}\n"
-          text += "-genre: #{s['genre'] ? s['genre']['name'] : ""}, #{s['sub_genre'] ? s['sub_genre']['name'] : ""}\n"
-          text += "-open: #{s['open']}\n"
-          text += "-url: #{s['urls'] ? s['urls']['pc'] : ""}\n"
-          reply = {
-            type: 'text',
-            text: text
-          }
-          replies << reply
+          bubbles << restaurant_bubble(s)
         end
+        replies = carousel(bubbles)
       end
       return replies
+    end
+
+    def restaurant_text(r)
+      text = ""
+      text += "[#{s['name']}]\n"
+      text += "-address: #{s['address']}\n"
+      text += "-genre: #{s['genre'] ? s['genre']['name'] : ""}, #{s['sub_genre'] ? s['sub_genre']['name'] : ""}\n"
+      text += "-open: #{s['open']}\n"
+      text += "-url: #{s['urls'] ? s['urls']['pc'] : ""}\n"
+      return {
+        type: 'text',
+        text: text
+      }
+    end
+
+    def restaurant_bubble(r)
+      {
+        type: "bubble",
+        size: "mega",
+        hero: {
+          type: "image",
+          url: r['photo']['mobile']['s'],
+          size: "full",
+          aspectMode: "cover",
+          aspectRatio: "320:213"
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'text',
+                  text: r['name'],
+                  weight: 'bold',
+                  size: 'lg',
+                  wrap: true
+                },
+                {
+                  type: 'box',
+                  layout: 'baseline',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: r['genre']['catch'],
+                      color: '#666666',
+                      size: 'sm',
+                      wrap: true,
+                      flex: 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'box',
+              layout: 'vertical',
+              contents: [
+                {
+                  type: 'box',
+                  layout: 'baseline',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: "Genre",
+                      color: "#999999",
+                      size: 'sm',
+                      flex: 1
+                    },
+                    {
+                      type: 'text',
+                      text: r['genre']['name'],
+                      color: '#666666',
+                      size: 'sm',
+                      wrap: true,
+                      flex: 5
+                    }
+                  ]
+                },
+                {
+                  type: 'box',
+                  layout: 'baseline',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: "Open",
+                      color: "#999999",
+                      size: 'sm',
+                      flex: 1
+                    },
+                    {
+                      type: 'text',
+                      text: r['open'],
+                      color: '#666666',
+                      size: 'sm',
+                      wrap: true,
+                      flex: 5
+                    }
+                  ]
+                },
+                {
+                  type: 'box',
+                  layout: 'baseline',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: "Place",
+                      color: "#999999",
+                      size: 'sm',
+                      flex: 1
+                    },
+                    {
+                      type: 'text',
+                      text: r['address'],
+                      color: '#666666',
+                      size: 'sm',
+                      wrap: true,
+                      flex: 5
+                    }
+                  ]
+                }
+              ],
+              paddingTop: "16px",
+              spacing: 'sm'
+            }
+          ]
+        },
+        footer: {
+          type: 'box',
+          layout: 'horizontal',
+          contents: [
+            {
+              type: 'button',
+              style: 'link',
+              height: 'xs',
+              action: {
+                type: 'uri',
+                label: 'URL',
+                uri: r['urls']['pc']
+              }
+            },
+            {
+              type: 'button',
+              style: 'link',
+              height: 'xs',
+              action: {
+                type: 'uri',
+                label: 'マップで見る',
+                uri: "https://webservice.recruit.co.jp/hotpepper/reference.html"
+              }
+            }
+          ],
+          paddingAll: 'none'
+        }
+      }
+    end
+
+    def carousel(bubbles)
+      {
+        type: 'flex',
+        altText: '検索結果',
+        contents: {
+          type: 'carousel',
+          contents: bubbles
+        }
+      }
     end
 
     def keyword_search_info
