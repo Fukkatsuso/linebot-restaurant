@@ -5,6 +5,7 @@ ADD app.rb .
 ADD config.ru .
 ADD Gemfile .
 ADD Gemfile.lock .
+ADD src ./src/
 
 RUN gem install bundler && \
     bundle install --path vendor/bundle
